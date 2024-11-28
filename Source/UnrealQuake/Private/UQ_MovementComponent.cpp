@@ -7,6 +7,8 @@
 #include "UQ_Public.h"
 #include "UQ_SurfaceFlags.h"
 
+
+
 // Initialize default q3 values
 UUQ_MovementComponent::UUQ_MovementComponent()
 	: pm_stopspeed(100.0f)
@@ -76,6 +78,48 @@ void UUQ_MovementComponent::PM_Friction()
 
 void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, float accel)
 {
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
+
+#if 1
+	// q2 style
+	int			i;
+	float		addspeed, accelspeed, currentspeed;
+
+	currentspeed = FVector::DotProduct(pm.ps->velocity, wishdir);
+	addspeed = wishspeed - currentspeed;
+	if (addspeed <= 0) {
+		return;
+	}
+	accelspeed = accel * pml.frametime * wishspeed;
+	if (accelspeed > addspeed) {
+		accelspeed = addspeed;
+	}
+
+	for (i = 0; i < 3; i++) {
+		pm.ps->velocity[i] += accelspeed * wishdir[i];
+	}
+#else
+	{
+		// proper way (avoids strafe jump maxspeed bug), but feels bad
+		FVector		wishVelocity;
+		FVector		pushDir;
+		float		pushLen;
+		float		canPush;
+
+		wishVelocity = wishdir * wishspeed;
+		pushDir = wishVelocity - pm.ps->velocity;
+		pushLen = pushDir.Normalize();
+
+		canPush = accel * pml.frametime * wishspeed;
+		if (canPush > pushLen) {
+			canPush = pushLen;
+		}
+		// UQ: This is not commented out in q3, but I haven't had to do this math yet and this movement is not even used and I am lazy
+		//VectorMA(pm.ps->velocity, canPush, pushDir, pm.ps->velocity);
+	}
+#endif
 }
 
 float UUQ_MovementComponent::PM_CmdScale(FUQ_usercmd* cmd)
@@ -124,6 +168,10 @@ void UUQ_MovementComponent::PM_GrappleMove()
 // UQ: #COMPLETE
 void UUQ_MovementComponent::PM_WalkMove()
 {
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
+
 	int32		i = 0;
 	FVector		wishvel = FVector::ZeroVector;
 	float		fmove = 0.0f, smove = 0.0f;
@@ -183,6 +231,7 @@ void UUQ_MovementComponent::PM_WalkMove()
 	// when going up or down slopes the wish velocity should Not be zero
 	//	wishvel[2] = 0;
 
+	// UQ: Consider implementing a UQ math library which uses Unreal's functions but with a naming convention similar to q3 to avoid confusion when comparing against source code
 	wishdir = wishvel;
 	wishspeed = wishdir.Normalize();
 	wishspeed *= scale;
@@ -236,7 +285,7 @@ void UUQ_MovementComponent::PM_WalkMove()
 	// don't decrease velocity when going up or down a slope
 	pm.ps->velocity.Normalize();
 
-	// UQ:commenting out q3 line, I think the below works
+	// UQ:commenting out q3 line, I think the below works as it is (vector, scalar, output). So x = x * y -> x *= y; where x = pm.ps->velocity and vel = y
 	//VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
 	pm.ps->velocity *= vel;
 
@@ -248,7 +297,7 @@ void UUQ_MovementComponent::PM_WalkMove()
 
 	PM_StepSlideMove(false);
 	// UQ: Could replace with a UE log if desired
-	//Com_Printf("velocity2 = %1.1f\n", VectorLength(pm->ps->velocity));
+	//Com_Printf("velocity2 = %1.1f\n", VectorLength(pm->ps->velocity));*/
 }
 
 void UUQ_MovementComponent::PM_DeadMove()

@@ -14,6 +14,9 @@
 	Description: Implementation of movement functions as a UActorComponent 
 */
 
+// UQ: These are not static in q3. May need to revert but had compiler errors in PM_Accelerate
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UNREALQUAKE_API UUQ_MovementComponent : public UActorComponent
 {
@@ -30,9 +33,9 @@ public:
 
 	// Beginning of Quake III parameters
 
-	//@TODO Fix these variables
-	Fpmove pm;
-	Fpml pml;
+	//UD: Need to fix these parameters. They aren't static in q3
+	//static Fpmove pm;
+	//static Fpml pml;
 
 	// movement parameters
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -97,7 +100,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_ForceLegsAnim(int anim);
 
-	// This is not static in q3, but it gave compiler errors. May need to reverse
+	// UQ: This is not static in q3, but it gave compiler errors. May need to reverse
 	UFUNCTION(BlueprintCallable)
 	static void PM_ClipVelocity(FVector in, FVector normal, FVector out, float overbounce);
 
