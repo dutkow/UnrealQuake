@@ -97,8 +97,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_ForceLegsAnim(int anim);
 
+	// This is not static in q3, but it gave compiler errors. May need to reverse
 	UFUNCTION(BlueprintCallable)
-	void PM_ClipVelocity(FVector in, FVector normal, FVector out, float overbounce);
+	static void PM_ClipVelocity(FVector in, FVector normal, FVector out, float overbounce);
 
 	UFUNCTION(BlueprintCallable)
 	static void PM_Friction();
@@ -137,8 +138,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_GrappleMove();
 
+	// This is static in q3 but static causes compiler errors. May need to revert
 	UFUNCTION(BlueprintCallable)
-	static void PM_WalkMove();
+	void PM_WalkMove();
 
 	UFUNCTION(BlueprintCallable)
 	static void PM_DeadMove();

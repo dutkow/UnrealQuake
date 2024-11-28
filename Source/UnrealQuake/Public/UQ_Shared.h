@@ -18,51 +18,72 @@ struct FUQ_playerState // hehe, funny prefixes
 {
     GENERATED_BODY()
 
-    int32 CommandTime;
-    int32 PMType;
-    int32 BobCycle;
-    int32 PMFlags;
-    int32 PMTime;
-    FVector Origin;
-    FVector Velocity;
-    int32 WeaponTime;
-    int32 Gravity;
-    int32 Speed;
-    TArray<int32> DeltaAngles;
-    int32 GroundEntityNum;
-    int32 LegsTimer;
-    int32 LegsAnim;
-    int32 TorsoTimer;
-    int32 TorsoAnim;
-    int32 MovementDir;
-    FVector GrapplePoint;
-    int32 EFlags;
-    int32 EventSequence;
-    TArray<int32> Events;
-    TArray<int32> EventParms;
-    int32 ExternalEvent;
-    int32 ExternalEventParm;
-    int32 ExternalEventTime;
-    int32 ClientNum;
-    int32 Weapon;
-    int32 WeaponState;
-    FVector ViewAngles;
-    int32 ViewHeight;
-    int32 DamageEvent;
-    int32 DamageYaw;
-    int32 DamagePitch;
-    int32 DamageCount;
-    TArray<int32> Stats;
-    TArray<int32> Persistant;
-    TArray<int32> Powerups;
-    TArray<int32> Ammo;
-    int32 Generic1;
-    int32 LoopSound;
-    int32 JumppadEnt;
-    int32 Ping;
-    int32 PMoveFrameCount;
-    int32 JumppadFrame;
-    int32 EntityEventSequence;
+	int			commandTime;	// cmd->serverTime of last executed command
+	int			pm_type;
+	int			bobCycle;		// for view bobbing and footstep generation
+	int			pm_flags;		// ducked, jump_held, etc
+	int			pm_time;
+
+	FVector		origin;
+	FVector		velocity;
+	int			weaponTime;
+	int			gravity;
+	int			speed;
+	int			delta_angles[3];	// add to command angles to get view direction
+	// changed by spawns, rotating objects, and teleporters
+
+	int			groundEntityNum;// ENTITYNUM_NONE = in air
+
+	int			legsTimer;		// don't change low priority animations until this runs out
+	int			legsAnim;		// mask off ANIM_TOGGLEBIT
+
+	int			torsoTimer;		// don't change low priority animations until this runs out
+	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
+
+	int			movementDir;	// a number 0 to 7 that represents the reletive angle
+	// of movement to the view angle (axial and diagonals)
+	// when at rest, the value will remain unchanged
+	// used to twist the legs during strafing
+
+	FVector		grapplePoint;	// location of grapple to pull towards if PMF_GRAPPLE_PULL
+
+	int			eFlags;			// copied to entityState_t->eFlags
+
+	int			eventSequence;	// pmove generated events
+	//int			events[MAX_PS_EVENTS];
+	//int			eventParms[MAX_PS_EVENTS];
+
+	int			externalEvent;	// events set on player from another source
+	int			externalEventParm;
+	int			externalEventTime;
+
+	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
+	int			weapon;			// copied to entityState_t->weapon
+	int			weaponstate;
+
+	FVector		viewangles;		// for fixed views
+	int			viewheight;
+
+	// damage feedback
+	int			damageEvent;	// when it changes, latch the other parms
+	int			damageYaw;
+	int			damagePitch;
+	int			damageCount;
+
+	//int			stats[MAX_STATS];
+	//int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
+	//int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
+	//int			ammo[MAX_WEAPONS];
+
+	int			generic1;
+	int			loopSound;
+	int			jumppad_ent;	// jumppad entity hit this frame
+
+	// not communicated over the net at all
+	int			ping;			// server to game info for scoreboard
+	int			pmove_framecount;	// FIXME: don't transmit over the network
+	int			jumppad_frame;
+	int			entityEventSequence;
 };
 
 USTRUCT(BlueprintType)
