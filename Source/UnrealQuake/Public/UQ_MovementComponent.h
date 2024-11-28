@@ -31,8 +31,8 @@ public:
 	// Beginning of Quake III parameters
 
 	//@TODO Fix these variables
-	//Fpmove pm;
-	//Fpmovel pml;
+	Fpmove pm;
+	Fpml pml;
 
 	// movement parameters
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

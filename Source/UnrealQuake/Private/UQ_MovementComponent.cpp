@@ -121,9 +121,9 @@ void UUQ_MovementComponent::PM_GrappleMove()
 {
 }
 
+// UQ: #COMPLETE
 void UUQ_MovementComponent::PM_WalkMove()
 {
-
 	int32		i = 0;
 	FVector		wishvel = FVector::ZeroVector;
 	float		fmove = 0.0f, smove = 0.0f;
@@ -133,28 +133,23 @@ void UUQ_MovementComponent::PM_WalkMove()
 	FUQ_usercmd	cmd;
 	float		accelerate = 0.0f;
 	float		vel = 0.0f;
-
-	//@TODO Remove once pmove is properly defined in .h  Thesea re not in q3 source
-	Fpmove pm = Fpmove();
-	Fpml pml = Fpml();
 	
-	/*
-	if (pm->waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
+	if (pm.waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
 		// begin swimming
 		PM_WaterMove();
 		return;
 	}
-
+	
 	if (PM_CheckJump()) {
 		// jumped away
-		if (pm->waterlevel > 1) {
+		if (pm.waterlevel > 1) {
 			PM_WaterMove();
 		}
 		else {
 			PM_AirMove();
 		}
 		return;
-	}*/
+	}
 
 	PM_Friction();
 
@@ -179,11 +174,12 @@ void UUQ_MovementComponent::PM_WalkMove()
 	pml.right.Normalize();
 
 	
-	// Alternatively, you could do wishvel.X = pml.forward.X * fmove + pml.right.X * smove for each of X, Y, Z, but leaving as-is since q3 code is nice and short
+	// UQ: Alternatively, you could do wishvel.X = pml.forward.X * fmove + pml.right.X * smove for each of X, Y, Z, but leaving as-is since q3 code is nice and short
 	for (i = 0; i < 3; i++) {
 		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 	}
 
+	// UQ: This was commented out in q3 source
 	// when going up or down slopes the wish velocity should Not be zero
 	//	wishvel[2] = 0;
 
@@ -239,7 +235,8 @@ void UUQ_MovementComponent::PM_WalkMove()
 
 	// don't decrease velocity when going up or down a slope
 	pm.ps->velocity.Normalize();
-	// commenting out q3 line, I think the below works
+
+	// UQ:commenting out q3 line, I think the below works
 	//VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
 	pm.ps->velocity *= vel;
 
@@ -249,8 +246,8 @@ void UUQ_MovementComponent::PM_WalkMove()
 		return;
 	}
 
-	//PM_StepSlideMove(false);
-	// Could replace with a UE log if desired
+	PM_StepSlideMove(false);
+	// UQ: Could replace with a UE log if desired
 	//Com_Printf("velocity2 = %1.1f\n", VectorLength(pm->ps->velocity));
 }
 
