@@ -67,6 +67,6 @@ extern	float	pm_flightfriction;
 
 extern	int		c_pmove;
 
-//bool		PM_SlideMove(bool gravity);
-//void		PM_StepSlideMove(bool gravity);
+bool		PM_SlideMove(bool gravity);
+void		PM_StepSlideMove(bool gravity);
 

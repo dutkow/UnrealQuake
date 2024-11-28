@@ -3,3 +3,11 @@
 #include "UQ_Public.h"
 #include "UQ_Local.h"
 
+bool PM_SlideMove(bool gravity)
+{
+	return false;
+}
+void PM_StepSlideMove(bool gravity)
+{
+
+}
