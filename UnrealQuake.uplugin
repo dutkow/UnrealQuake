@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UnrealQuake",
+	"Description": "A blasphemous attempt to port elements of Quake III Arena to the Unreal Engine.",
+	"Category": "Other",
+	"CreatedBy": "Vincent Dutkowski",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "UnrealQuake",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
