@@ -27,9 +27,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // UnrealQuake: Added Unreal headers
 #pragma once
 #include "CoreMinimal.h"
+#include "bg_pmove.h"
 
 #include "q_shared.h"
-#include "bg_public.h"
+//#include "bg_public.h" //UnrealQuake: commenting this out as it was moved to the header file
 #include "bg_local.h"
 
 pmove_t		*pm;
@@ -260,6 +261,21 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 	
 	for (i=0 ; i<3 ; i++) {
 		pm->ps->velocity[i] += accelspeed*wishdir[i];	
+	}
+
+	// Debugging the values of accelspeed, wishspeed, and wishdir
+	if (GEngine) {
+		// Print acceleration speed to the screen
+		FString AccelSpeedText = FString::Printf(TEXT("accelspeed: %.2f"), accelspeed);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, AccelSpeedText);
+
+		// Print wishspeed to the screen
+		FString WishSpeedText = FString::Printf(TEXT("wishspeed: %.2f"), wishspeed);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, WishSpeedText);
+
+		// Print wishdir to the screen (assuming wishdir is a vec3_t, it should be an array of 3 floats)
+		FString WishDirText = FString::Printf(TEXT("wishdir: (%.2f, %.2f, %.2f)"), wishdir[0], wishdir[1], wishdir[2]);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, WishDirText);
 	}
 #else
 	// proper way (avoids strafe jump maxspeed bug), but feels bad
@@ -694,7 +710,10 @@ PM_WalkMove
 
 ===================
 */
-static void PM_WalkMove( void ) {
+//UnrealQuake: The static modifier was removed from this function in the header, but in q3 this is static
+void UBP_Pmove::PM_WalkMove( void ) {
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("walk move is running!"));
 	int			i;
 	vec3_t		wishvel;
 	float		fmove, smove;
@@ -1838,7 +1857,7 @@ PmoveSingle
 */
 void trap_SnapVector( float *v );
 
-void PmoveSingle (pmove_t *pmove) {
+void UBP_Pmove::PmoveSingle (pmove_t *pmove) {
 	pm = pmove;
 
 	// this counter lets us debug movement problems with a journal
@@ -2028,7 +2047,7 @@ Pmove
 Can be called by either the server or the client
 ================
 */
-void Pmove (pmove_t *pmove) {
+void UBP_Pmove::Pmove (pmove_t *pmove) {
 	int			finalTime;
 
 	finalTime = pmove->cmd.serverTime;
@@ -2070,5 +2089,56 @@ void Pmove (pmove_t *pmove) {
 
 	//PM_CheckStuck();
 
+}
+
+//UnrealQuake: Everything after this point consists of added functions used with Unreal
+
+UBP_Pmove::UBP_Pmove()
+{
+}
+
+void UBP_Pmove::BeginPlay()
+{
+}
+
+void UBP_Pmove::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("bg_pmove is ticking"));
+}
+
+void UBP_Pmove::HandlePlayerMovementInput(FUQ_PlayerMovementInput InPlayerMovementInput)
+{
+	PlayerMovementInput.ForwardInput = FMath::Clamp(InPlayerMovementInput.ForwardInput, -1.0f, 1.0f) * 127;
+	PlayerMovementInput.RightInput = FMath::Clamp(InPlayerMovementInput.RightInput, -1.0f, 1.0f) * 127;
+	PlayerMovementInput.UpInput = FMath::Clamp(InPlayerMovementInput.UpInput, -1.0f, 1.0f) * 127;
+
+
+	// Print the movement input values to the screen
+	/*
+	if (GEngine)
+	{
+		// Displaying the ForwardInput value on the screen
+		FString ForwardText = FString::Printf(TEXT("Forward Input: %.2f"), PlayerMovementInput.ForwardInput);
+		GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Green, ForwardText);
+
+		// Displaying the RightInput value on the screen
+		FString RightText = FString::Printf(TEXT("Right Input: %.2f"), PlayerMovementInput.RightInput);
+		GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Blue, RightText);
+
+		// Displaying the UpInput value on the screen
+		FString UpText = FString::Printf(TEXT("Up Input: %.2f"), PlayerMovementInput.UpInput);
+		GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Red, UpText);
+	}
+	*/
+	/*
+	if (pm)
+	{
+		pm->cmd.forwardmove = ForwardInput * 127;
+		pm->cmd.rightmove = RightInput * 127;
+		pm->cmd.upmove = UpInput * 127;
+	}
+	*/
+	//PM_WalkMove();
 }
 

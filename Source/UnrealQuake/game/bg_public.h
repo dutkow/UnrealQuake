@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // UnrealQuake: Added Unreal headers
 #pragma once
 #include "CoreMinimal.h"
+#include "q_shared.h" // UnrealQuake: q3 source code doesn't include this header but Unreal required it
 
 #define	GAME_VERSION		"baseq3-1"
 
