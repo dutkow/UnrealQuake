@@ -1,13 +1,35 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
 
-#pragma once
+This file is part of Quake III Arena source code.
 
-#include "CoreMinimal.h"
+Quake III Arena source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
 
-/**
-	Source file: surfaceflags.h
-	Description: Adds various surface flags used throughout the project
+Quake III Arena source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Foobar; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+===========================================================================
 */
+//
+// This file must be identical in the quake and utils directories
+
+// contents flags are seperate bits
+// a given brush can contribute multiple content bits
+
+// these definitions also need to be in q_shared.h!
+
+// UnrealQuake: Adding Unreal headers
+#pragma once
+#include "CoreMinimal.h"
 
 
 #define	CONTENTS_SOLID			1		// an eye is never valid in a solid
