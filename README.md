@@ -9,6 +9,12 @@ The original source code for Quake III Arena can be found on id Software's GitHu
 
 This project consists of a plugin that can be integrated into any Unreal Engine project. Please note that the code is not in a fully usable state yet. It is currently in the process of being ported, and additional work will be needed to make it functional and ready for production use.
 
+## Modifications to Quake III source code
+
+At least for my initial pass, I plan to modify Quake III's source code as little as possible to get something functional working and to avoid confusion when comparing against the original source code. If this project gets far enough, I may consider refactoring certain elements of it to better align with best practices with Unreal Engine. My various edits to the source code are commented with the designation "UnrealQuake:" in various comments throughout the code base, along with minor explanations of changes that I have made.
+
+Anyone familiar with the Quake codebase will notice that minimal changes have been made so far. Currently, I’m still using types like vec3_t instead of FVector and qbool instead of bool. This approach allows for faster progress, but in the future, a more substantial refactor may be necessary to better integrate with Unreal Engine and improve maintainability. Since C++ is largely compatible with C, major changes are not required at this stage. There's a certain elegance in C’s simplicity that I appreciate, but as the project evolves, adapting to Unreal’s conventions may be a higher priority.
+
 ## Plan
 
 The plan for porting the Quake III Arena code to Unreal Engine will evolve over time, but here is the general approach I am currently following:
