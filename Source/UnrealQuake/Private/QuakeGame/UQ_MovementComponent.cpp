@@ -6,7 +6,7 @@
 #include "QuakeGame/UQ_Local.h"
 #include "QuakeGame/UQ_Public.h"
 #include "QuakeGame/UQ_SurfaceFlags.h"
-
+#include "UQ_MathLibrary.h"
 
 
 // Initialize default q3 values
@@ -76,6 +76,13 @@ void UUQ_MovementComponent::PM_Friction()
 {
 }
 
+/*
+==============
+PM_Accelerate
+
+Handles user intended acceleration
+==============
+*/
 void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, float accel)
 {
 	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
@@ -122,9 +129,41 @@ void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, floa
 #endif
 }
 
+/*
+============
+PM_CmdScale
+
+Returns the scale factor to apply to cmd movements
+This allows the clients to use axial -127 to 127 values for all directions
+without getting a sqrt(2) distortion in speed.
+============
+*/
 float UUQ_MovementComponent::PM_CmdScale(FUQ_usercmd* cmd)
 {
-	return 0.0f;
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
+
+	int		max;
+	float	total;
+	float	scale;
+
+	max = abs(cmd->forwardmove);
+	if (abs(cmd->rightmove) > max) {
+		max = abs(cmd->rightmove);
+	}
+	if (abs(cmd->upmove) > max) {
+		max = abs(cmd->upmove);
+	}
+	if (!max) {
+		return 0;
+	}
+
+	total = sqrt(cmd->forwardmove * cmd->forwardmove
+		+ cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove);
+	scale = (float)pm.ps->speed * max / (127.0 * total);
+
+	return scale;
 }
 
 void UUQ_MovementComponent::PM_SetMovementDir()
@@ -157,15 +196,86 @@ void UUQ_MovementComponent::PM_FlyMove()
 {
 }
 
+/*
+===================
+PM_AirMove
+
+===================
+*/
 void UUQ_MovementComponent::PM_AirMove()
 {
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
+
+	int			i = 0;
+	FVector		wishvel = FVector::ZeroVector;
+	float		fmove, smove;
+	FVector		wishdir = FVector::ZeroVector;
+	float		wishspeed = 0;
+	float		scale = 0;
+	FUQ_usercmd	cmd;
+
+	PM_Friction();
+
+	fmove = pm.cmd.forwardmove;
+	smove = pm.cmd.rightmove;
+
+	cmd = pm.cmd;
+	scale = PM_CmdScale(&cmd);
+
+	// set the movementDir so clients can rotate the legs for strafing
+	PM_SetMovementDir();
+	wishvel[2] = 0;
+	/*
+	// project moves down to flat plane
+	pml.forward[2] = 0;
+	pml.right[2] = 0;
+	VectorNormalize(pml.forward);
+	VectorNormalize(pml.right);
+
+	for (i = 0; i < 2; i++) {
+		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
+	}
+
+	VectorCopy(wishvel, wishdir);
+	wishspeed = VectorNormalize(wishdir);
+	wishspeed *= scale;
+
+	// not on ground, so little effect on velocity
+	PM_Accelerate(wishdir, wishspeed, pm_airaccelerate);
+
+	// we may have a ground plane that is very steep, even
+	// though we don't have a groundentity
+	// slide along the steep plane
+	if (pml.groundPlane) {
+		PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,
+			pm->ps->velocity, OVERCLIP);
+	}
+
+#if 0
+	//ZOID:  If we are on the grapple, try stair-stepping
+	//this allows a player to use the grapple to pull himself
+	//over a ledge
+	if (pm->ps->pm_flags & PMF_GRAPPLE_PULL)
+		PM_StepSlideMove(qtrue);
+	else
+		PM_SlideMove(qtrue);
+#endif
+
+	PM_StepSlideMove(qtrue);*/
 }
 
 void UUQ_MovementComponent::PM_GrappleMove()
 {
 }
 
-// UQ: #COMPLETE
+/*
+===================
+PM_WalkMove
+
+===================
+*/
 void UUQ_MovementComponent::PM_WalkMove()
 {
 	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
@@ -218,9 +328,8 @@ void UUQ_MovementComponent::PM_WalkMove()
 	PM_ClipVelocity(pml.forward, pml.groundTrace.plane.normal, pml.forward, OVERCLIP);
 	PM_ClipVelocity(pml.right, pml.groundTrace.plane.normal, pml.right, OVERCLIP);
 	
-	pml.forward.Normalize();
-	pml.right.Normalize();
-
+	UQ_MathLibrary::VectorNormalize(pml.forward);
+	UQ_MathLibrary::VectorNormalize(pml.right);
 	
 	// UQ: Alternatively, you could do wishvel.X = pml.forward.X * fmove + pml.right.X * smove for each of X, Y, Z, but leaving as-is since q3 code is nice and short
 	for (i = 0; i < 3; i++) {
@@ -232,8 +341,8 @@ void UUQ_MovementComponent::PM_WalkMove()
 	//	wishvel[2] = 0;
 
 	// UQ: Consider implementing a UQ math library which uses Unreal's functions but with a naming convention similar to q3 to avoid confusion when comparing against source code
-	wishdir = wishvel;
-	wishspeed = wishdir.Normalize();
+	UQ_MathLibrary::VectorCopy(wishvel, wishdir);
+	wishspeed = UQ_MathLibrary::VectorNormalize(wishdir);
 	wishspeed *= scale;
 
 	// clamp the speed lower if ducking
@@ -276,18 +385,15 @@ void UUQ_MovementComponent::PM_WalkMove()
 		// pm->ps->velocity[2] = 0;
 	}
 
-	vel = pm.ps->velocity.Length();
+	vel = UQ_MathLibrary::VectorLength(pm.ps->velocity);
 
 	// slide along the ground plane
 	PM_ClipVelocity(pm.ps->velocity, pml.groundTrace.plane.normal,
 		pm.ps->velocity, OVERCLIP);
 
 	// don't decrease velocity when going up or down a slope
-	pm.ps->velocity.Normalize();
-
-	// UQ:commenting out q3 line, I think the below works as it is (vector, scalar, output). So x = x * y -> x *= y; where x = pm.ps->velocity and vel = y
-	//VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
-	pm.ps->velocity *= vel;
+	UQ_MathLibrary::VectorNormalize(pm.ps->velocity);
+	UQ_MathLibrary::VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
 
 
 	// don't do anything if standing still
