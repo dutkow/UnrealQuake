@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "UQ_Public.h"
-#include "UQ_Local.h"
+#include "QuakeGame/UQ_Public.h"
+#include "QuakeGame/UQ_Local.h"
 
 #include "UQ_MovementComponent.generated.h"
 
@@ -30,9 +30,9 @@ public:
 
 	// Beginning of Quake III parameters
 
-	//@TODO Fix these variables
-	//Fpmove pm;
-	//Fpmovel pml;
+	//UD: Need to fix these parameters. They aren't static in q3
+	//static Fpmove pm;
+	//static Fpml pml;
 
 	// movement parameters
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -97,8 +97,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_ForceLegsAnim(int anim);
 
+	// UQ: This is not static in q3, but it gave compiler errors. May need to reverse
 	UFUNCTION(BlueprintCallable)
-	void PM_ClipVelocity(FVector in, FVector normal, FVector out, float overbounce);
+	static void PM_ClipVelocity(FVector in, FVector normal, FVector out, float overbounce);
 
 	UFUNCTION(BlueprintCallable)
 	static void PM_Friction();
@@ -137,8 +138,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_GrappleMove();
 
+	// This is static in q3 but static causes compiler errors. May need to revert
 	UFUNCTION(BlueprintCallable)
-	static void PM_WalkMove();
+	void PM_WalkMove();
 
 	UFUNCTION(BlueprintCallable)
 	static void PM_DeadMove();
@@ -152,6 +154,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_CrashLand();
 
+	// UQ: TODO Add an FTraceResult and remove comments on this function
 	//UFUNCTION(BlueprintCallable)
 	//static bool PM_CorrectAllSolid(FTraceResult& Trace);
 
@@ -191,12 +194,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_DropTimers();
 
-	//UFUNCTION(BlueprintCallable)
-	//void PM_UpdateViewAngles(playerState_t* ps, const usercmd_t* cmd);
+	void PM_UpdateViewAngles(FUQ_playerState* ps, const FUQ_usercmd cmd);
 
-	//UFUNCTION(BlueprintCallable)
-	//void PmoveSingle(pmove_t* pmove);
+	UFUNCTION(BlueprintCallable)
+	void PmoveSingle(Fpmove pmove);
 
-	//UFUNCTION(BlueprintCallable)
-	//void Pmove(pmove_t* pmove);
+	UFUNCTION(BlueprintCallable)
+	void Pmove(Fpmove pmove);
 };

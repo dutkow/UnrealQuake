@@ -1,8 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UQ_MovementComponent.h"
-#include "UQ_Shared.h"
+#include "QuakeGame/UQ_MovementComponent.h"
+#include "QuakeGame/UQ_Shared.h"
+#include "QuakeGame/UQ_Local.h"
+#include "QuakeGame/UQ_Public.h"
+#include "QuakeGame/UQ_SurfaceFlags.h"
+
+
 
 // Initialize default q3 values
 UUQ_MovementComponent::UUQ_MovementComponent()
@@ -73,6 +78,48 @@ void UUQ_MovementComponent::PM_Friction()
 
 void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, float accel)
 {
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
+
+#if 1
+	// q2 style
+	int			i;
+	float		addspeed, accelspeed, currentspeed;
+
+	currentspeed = FVector::DotProduct(pm.ps->velocity, wishdir);
+	addspeed = wishspeed - currentspeed;
+	if (addspeed <= 0) {
+		return;
+	}
+	accelspeed = accel * pml.frametime * wishspeed;
+	if (accelspeed > addspeed) {
+		accelspeed = addspeed;
+	}
+
+	for (i = 0; i < 3; i++) {
+		pm.ps->velocity[i] += accelspeed * wishdir[i];
+	}
+#else
+	{
+		// proper way (avoids strafe jump maxspeed bug), but feels bad
+		FVector		wishVelocity;
+		FVector		pushDir;
+		float		pushLen;
+		float		canPush;
+
+		wishVelocity = wishdir * wishspeed;
+		pushDir = wishVelocity - pm.ps->velocity;
+		pushLen = pushDir.Normalize();
+
+		canPush = accel * pml.frametime * wishspeed;
+		if (canPush > pushLen) {
+			canPush = pushLen;
+		}
+		// UQ: This is not commented out in q3, but I haven't had to do this math yet and this movement is not even used and I am lazy
+		//VectorMA(pm.ps->velocity, canPush, pushDir, pm.ps->velocity);
+	}
+#endif
 }
 
 float UUQ_MovementComponent::PM_CmdScale(FUQ_usercmd* cmd)
@@ -118,40 +165,39 @@ void UUQ_MovementComponent::PM_GrappleMove()
 {
 }
 
+// UQ: #COMPLETE
 void UUQ_MovementComponent::PM_WalkMove()
 {
+	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
+	Fpmove pm = Fpmove();
+	Fpml pml = Fpml();
 
-	int32		i = 0.0f;
-	float		fmove = 0.0f;
-	float		smove = 0.0f;
+	int32		i = 0;
+	FVector		wishvel = FVector::ZeroVector;
+	float		fmove = 0.0f, smove = 0.0f;
 	FVector		wishdir = FVector::ZeroVector;
 	float		wishspeed = 0.0f;
 	float		scale = 0.0f;
 	FUQ_usercmd	cmd;
 	float		accelerate = 0.0f;
 	float		vel = 0.0f;
-
-	//@TODO Remove once pmove is properly defined in .h
-	Fpmove pm = Fpmove();
-	Fpmovel pml = Fpmovel();
 	
-	/*
-	if (pm->waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
+	if (pm.waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
 		// begin swimming
 		PM_WaterMove();
 		return;
 	}
-
+	
 	if (PM_CheckJump()) {
 		// jumped away
-		if (pm->waterlevel > 1) {
+		if (pm.waterlevel > 1) {
 			PM_WaterMove();
 		}
 		else {
 			PM_AirMove();
 		}
 		return;
-	}*/
+	}
 
 	PM_Friction();
 
@@ -167,45 +213,50 @@ void UUQ_MovementComponent::PM_WalkMove()
 	// project moves down to flat plane
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
-	/*
+	
 	// project the forward and right directions onto the ground plane
 	PM_ClipVelocity(pml.forward, pml.groundTrace.plane.normal, pml.forward, OVERCLIP);
 	PM_ClipVelocity(pml.right, pml.groundTrace.plane.normal, pml.right, OVERCLIP);
-	//
-	VectorNormalize(pml.forward);
-	VectorNormalize(pml.right);
+	
+	pml.forward.Normalize();
+	pml.right.Normalize();
 
+	
+	// UQ: Alternatively, you could do wishvel.X = pml.forward.X * fmove + pml.right.X * smove for each of X, Y, Z, but leaving as-is since q3 code is nice and short
 	for (i = 0; i < 3; i++) {
 		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 	}
-	// when going up or down slopes the wish velocity should Not be zero
-//	wishvel[2] = 0;
 
-	VectorCopy(wishvel, wishdir);
-	wishspeed = VectorNormalize(wishdir);
+	// UQ: This was commented out in q3 source
+	// when going up or down slopes the wish velocity should Not be zero
+	//	wishvel[2] = 0;
+
+	// UQ: Consider implementing a UQ math library which uses Unreal's functions but with a naming convention similar to q3 to avoid confusion when comparing against source code
+	wishdir = wishvel;
+	wishspeed = wishdir.Normalize();
 	wishspeed *= scale;
 
 	// clamp the speed lower if ducking
-	if (pm->ps->pm_flags & PMF_DUCKED) {
-		if (wishspeed > pm->ps->speed * pm_duckScale) {
-			wishspeed = pm->ps->speed * pm_duckScale;
+	if (pm.ps->pm_flags & PMF_DUCKED) {
+		if (wishspeed > pm.ps->speed * pm_duckScale) {
+			wishspeed = pm.ps->speed * pm_duckScale;
 		}
 	}
 
 	// clamp the speed lower if wading or walking on the bottom
-	if (pm->waterlevel) {
+	if (pm.waterlevel) {
 		float	waterScale;
 
-		waterScale = pm->waterlevel / 3.0;
+		waterScale = pm.waterlevel / 3.0;
 		waterScale = 1.0 - (1.0 - pm_swimScale) * waterScale;
-		if (wishspeed > pm->ps->speed * waterScale) {
-			wishspeed = pm->ps->speed * waterScale;
+		if (wishspeed > pm.ps->speed * waterScale) {
+			wishspeed = pm.ps->speed * waterScale;
 		}
 	}
 
 	// when a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit
-	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
+	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm.ps->pm_flags & PMF_TIME_KNOCKBACK) {
 		accelerate = pm_airaccelerate;
 	}
 	else {
@@ -217,31 +268,35 @@ void UUQ_MovementComponent::PM_WalkMove()
 	//Com_Printf("velocity = %1.1f %1.1f %1.1f\n", pm->ps->velocity[0], pm->ps->velocity[1], pm->ps->velocity[2]);
 	//Com_Printf("velocity1 = %1.1f\n", VectorLength(pm->ps->velocity));
 
-	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
-		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
+	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm.ps->pm_flags & PMF_TIME_KNOCKBACK) {
+		pm.ps->velocity[2] -= pm.ps->gravity * pml.frametime;
 	}
 	else {
 		// don't reset the z velocity for slopes
-//		pm->ps->velocity[2] = 0;
+		// pm->ps->velocity[2] = 0;
 	}
 
-	vel = VectorLength(pm->ps->velocity);
+	vel = pm.ps->velocity.Length();
 
 	// slide along the ground plane
-	PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,
-		pm->ps->velocity, OVERCLIP);
+	PM_ClipVelocity(pm.ps->velocity, pml.groundTrace.plane.normal,
+		pm.ps->velocity, OVERCLIP);
 
 	// don't decrease velocity when going up or down a slope
-	VectorNormalize(pm->ps->velocity);
-	VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
+	pm.ps->velocity.Normalize();
+
+	// UQ:commenting out q3 line, I think the below works as it is (vector, scalar, output). So x = x * y -> x *= y; where x = pm.ps->velocity and vel = y
+	//VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
+	pm.ps->velocity *= vel;
+
 
 	// don't do anything if standing still
-	if (!pm->ps->velocity[0] && !pm->ps->velocity[1]) {
+	if (!pm.ps->velocity[0] && !pm.ps->velocity[1]) {
 		return;
 	}
 
-	PM_StepSlideMove(qfalse);
-
+	PM_StepSlideMove(false);
+	// UQ: Could replace with a UE log if desired
 	//Com_Printf("velocity2 = %1.1f\n", VectorLength(pm->ps->velocity));*/
 }
 
@@ -307,5 +362,17 @@ void UUQ_MovementComponent::PM_Animate()
 }
 
 void UUQ_MovementComponent::PM_DropTimers()
+{
+}
+
+void UUQ_MovementComponent::PM_UpdateViewAngles(FUQ_playerState* ps, const FUQ_usercmd cmd)
+{
+}
+
+void UUQ_MovementComponent::PmoveSingle(Fpmove pmove)
+{
+}
+
+void UUQ_MovementComponent::Pmove(Fpmove pmove)
 {
 }

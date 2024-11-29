@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UQ_Public.h"
+#include "QuakeGame/UQ_Shared.h"
 
-UQ_Public::UQ_Public()
+UQ_Shared::UQ_Shared()
 {
 }
 
-UQ_Public::~UQ_Public()
+UQ_Shared::~UQ_Shared()
 {
 }
