@@ -29,4 +29,9 @@ public:
 
 	static void VectorScale(const FVector& v, float scale, FVector& out);
 
+	static void VectorSubtract(const FVector& veca, const FVector& vecb, FVector& out);
+
+	static void VectorAdd(const FVector& veca, const FVector& vecb, FVector& out);
+
+
 };

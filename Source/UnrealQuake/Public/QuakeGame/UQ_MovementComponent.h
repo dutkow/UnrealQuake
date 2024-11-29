@@ -28,52 +28,6 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Beginning of Quake III parameters
-
-	//UD: Need to fix these parameters. They aren't static in q3
-	//static Fpmove pm;
-	//static Fpml pml;
-
-	// movement parameters
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_stopspeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_duckScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_swimScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_wadeScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_accelerate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_airaccelerate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_wateraccelerate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_flyaccelerate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_friction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_waterfriction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_flightfriction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float pm_spectatorfriction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int c_pmove;
-
 	// Beginning of Quake III Arena functions
 
 	UFUNCTION(BlueprintCallable)
@@ -95,7 +49,7 @@ public:
 	static void PM_ContinueTorsoAnim(int anim);
 
 	UFUNCTION(BlueprintCallable)
-	static void PM_ForceLegsAnim(int anim);
+	static void PM_ForceLegsAnim(EUQ_animNumber anim);
 
 	// UQ: This is not static in q3, but it gave compiler errors. May need to reverse
 	UFUNCTION(BlueprintCallable)

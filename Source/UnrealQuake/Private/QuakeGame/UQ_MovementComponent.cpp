@@ -9,21 +9,31 @@
 #include "UQ_MathLibrary.h"
 
 
+// UQ: Declaring global variables like this isn't really recommended in Unreal, but to maintain consistency with the q3 source code on a first pass I am leaving this as-is
+Fpmove* pm;
+Fpml	pml;
+
+// movement parameters
+float	pm_stopspeed = 100.0f;
+float	pm_duckScale = 0.25f;
+float	pm_swimScale = 0.50f;
+float	pm_wadeScale = 0.70f;
+
+float	pm_accelerate = 10.0f;
+float	pm_airaccelerate = 1.0f;
+float	pm_wateraccelerate = 4.0f;
+float	pm_flyaccelerate = 8.0f;
+
+float	pm_friction = 6.0f;
+float	pm_waterfriction = 1.0f;
+float	pm_flightfriction = 3.0f;
+float	pm_spectatorfriction = 5.0f;
+
+int		c_pmove = 0;
+
+
 // Initialize default q3 values
 UUQ_MovementComponent::UUQ_MovementComponent()
-	: pm_stopspeed(100.0f)
-	, pm_duckScale(0.25f)
-	, pm_swimScale(0.50f)
-	, pm_wadeScale(0.70f)
-	, pm_accelerate(10.0f)
-	, pm_airaccelerate(1.0f)
-	, pm_wateraccelerate(4.0f)
-	, pm_flyaccelerate(8.0f)
-	, pm_friction(6.0f)
-	, pm_waterfriction(1.0f)
-	, pm_flightfriction(3.0f)
-	, pm_spectatorfriction(5.0f)
-	, c_pmove(0)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
@@ -64,7 +74,7 @@ void UUQ_MovementComponent::PM_ContinueTorsoAnim(int anim)
 {
 }
 
-void UUQ_MovementComponent::PM_ForceLegsAnim(int anim)
+void UUQ_MovementComponent::PM_ForceLegsAnim(EUQ_animNumber anim)
 {
 }
 
@@ -86,15 +96,15 @@ Handles user intended acceleration
 void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, float accel)
 {
 	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
-	Fpmove pm = Fpmove();
-	Fpml pml = Fpml();
+	//Fpmove pm = Fpmove();
+	//Fpml pml = Fpml();
 
 #if 1
 	// q2 style
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
 
-	currentspeed = FVector::DotProduct(pm.ps->velocity, wishdir);
+	currentspeed = FVector::DotProduct(pm->ps->velocity, wishdir);
 	addspeed = wishspeed - currentspeed;
 	if (addspeed <= 0) {
 		return;
@@ -105,7 +115,7 @@ void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, floa
 	}
 
 	for (i = 0; i < 3; i++) {
-		pm.ps->velocity[i] += accelspeed * wishdir[i];
+		pm->ps->velocity[i] += accelspeed * wishdir[i];
 	}
 #else
 	{
@@ -116,7 +126,7 @@ void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, floa
 		float		canPush;
 
 		wishVelocity = wishdir * wishspeed;
-		pushDir = wishVelocity - pm.ps->velocity;
+		pushDir = wishVelocity - pm->ps->velocity;
 		pushLen = pushDir.Normalize();
 
 		canPush = accel * pml.frametime * wishspeed;
@@ -124,7 +134,7 @@ void UUQ_MovementComponent::PM_Accelerate(FVector wishdir, float wishspeed, floa
 			canPush = pushLen;
 		}
 		// UQ: This is not commented out in q3, but I haven't had to do this math yet and this movement is not even used and I am lazy
-		//VectorMA(pm.ps->velocity, canPush, pushDir, pm.ps->velocity);
+		//VectorMA(pm->ps->velocity, canPush, pushDir, pm->ps->velocity);
 	}
 #endif
 }
@@ -140,10 +150,6 @@ without getting a sqrt(2) distortion in speed.
 */
 float UUQ_MovementComponent::PM_CmdScale(FUQ_usercmd* cmd)
 {
-	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
-	Fpmove pm = Fpmove();
-	Fpml pml = Fpml();
-
 	int		max;
 	float	total;
 	float	scale;
@@ -161,18 +167,100 @@ float UUQ_MovementComponent::PM_CmdScale(FUQ_usercmd* cmd)
 
 	total = sqrt(cmd->forwardmove * cmd->forwardmove
 		+ cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove);
-	scale = (float)pm.ps->speed * max / (127.0 * total);
+	scale = (float)pm->ps->speed * max / (127.0 * total);
 
 	return scale;
 }
 
+/*
+================
+PM_SetMovementDir
+
+Determine the rotation of the legs reletive
+to the facing dir
+================
+*/
 void UUQ_MovementComponent::PM_SetMovementDir()
 {
+	if (pm->cmd.forwardmove || pm->cmd.rightmove) {
+		if (pm->cmd.rightmove == 0 && pm->cmd.forwardmove > 0) {
+			pm->ps->movementDir = 0;
+		}
+		else if (pm->cmd.rightmove < 0 && pm->cmd.forwardmove > 0) {
+			pm->ps->movementDir = 1;
+		}
+		else if (pm->cmd.rightmove < 0 && pm->cmd.forwardmove == 0) {
+			pm->ps->movementDir = 2;
+		}
+		else if (pm->cmd.rightmove < 0 && pm->cmd.forwardmove < 0) {
+			pm->ps->movementDir = 3;
+		}
+		else if (pm->cmd.rightmove == 0 && pm->cmd.forwardmove < 0) {
+			pm->ps->movementDir = 4;
+		}
+		else if (pm->cmd.rightmove > 0 && pm->cmd.forwardmove < 0) {
+			pm->ps->movementDir = 5;
+		}
+		else if (pm->cmd.rightmove > 0 && pm->cmd.forwardmove == 0) {
+			pm->ps->movementDir = 6;
+		}
+		else if (pm->cmd.rightmove > 0 && pm->cmd.forwardmove > 0) {
+			pm->ps->movementDir = 7;
+		}
+	}
+	else {
+		// if they aren't actively going directly sideways,
+		// change the animation to the diagonal so they
+		// don't stop too crooked
+		if (pm->ps->movementDir == 2) {
+			pm->ps->movementDir = 1;
+		}
+		else if (pm->ps->movementDir == 6) {
+			pm->ps->movementDir = 7;
+		}
+	}
 }
 
+/*
+=============
+PM_CheckJump
+=============
+*/
 bool UUQ_MovementComponent::PM_CheckJump()
 {
-	return false;
+	if (pm->ps->pm_flags & PMF_RESPAWNED) {
+		return false;		// don't allow jump until all buttons are up
+	}
+
+	if (pm->cmd.upmove < 10) {
+		// not holding jump
+		return false;
+	}
+
+	// must wait for jump to be released
+	if (pm->ps->pm_flags & PMF_JUMP_HELD) {
+		// clear upmove so cmdscale doesn't lower running speed
+		pm->cmd.upmove = 0;
+		return false;
+	}
+
+	pml.groundPlane = false;		// jumping away
+	pml.walking = false;
+	pm->ps->pm_flags |= PMF_JUMP_HELD;
+
+	pm->ps->groundEntityNum = ENTITYNUM_NONE;
+	pm->ps->velocity[2] = JUMP_VELOCITY;
+	//PM_AddEvent(EV_JUMP);
+
+	if (pm->cmd.forwardmove >= 0) {
+		PM_ForceLegsAnim(EUQ_animNumber::LEGS_JUMP);
+		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+	}
+	else {
+		PM_ForceLegsAnim(EUQ_animNumber::LEGS_JUMPB);
+		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+	}
+	return true;
 }
 
 bool UUQ_MovementComponent::PM_CheckWaterJump()
@@ -192,8 +280,47 @@ void UUQ_MovementComponent::PM_InvulnerabilityMove()
 {
 }
 
+/*
+===================
+PM_FlyMove
+
+Only with the flight powerup
+===================
+*/
 void UUQ_MovementComponent::PM_FlyMove()
 {
+	int		i;
+	FVector	wishvel;
+	float	wishspeed;
+	FVector	wishdir;
+	float	scale;
+
+	// normal slowdown
+	PM_Friction();
+
+	scale = PM_CmdScale(&pm->cmd);
+	//
+	// user intentions
+	//
+	if (!scale) {
+		wishvel[0] = 0;
+		wishvel[1] = 0;
+		wishvel[2] = 0;
+	}
+	else {
+		for (i = 0; i < 3; i++) {
+			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove;
+		}
+
+		wishvel[2] += scale * pm->cmd.upmove;
+	}
+
+	UQ_MathLibrary::VectorCopy(wishvel, wishdir);
+	wishspeed = UQ_MathLibrary::VectorNormalize(wishdir);
+
+	PM_Accelerate(wishdir, wishspeed, pm_flyaccelerate);
+
+	PM_StepSlideMove(false);
 }
 
 /*
@@ -204,10 +331,6 @@ PM_AirMove
 */
 void UUQ_MovementComponent::PM_AirMove()
 {
-	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
-	Fpmove pm = Fpmove();
-	Fpml pml = Fpml();
-
 	int			i = 0;
 	FVector		wishvel = FVector::ZeroVector;
 	float		fmove, smove;
@@ -218,10 +341,10 @@ void UUQ_MovementComponent::PM_AirMove()
 
 	PM_Friction();
 
-	fmove = pm.cmd.forwardmove;
-	smove = pm.cmd.rightmove;
+	fmove = pm->cmd.forwardmove;
+	smove = pm->cmd.rightmove;
 
-	cmd = pm.cmd;
+	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
 
 	// set the movementDir so clients can rotate the legs for strafing
@@ -266,8 +389,31 @@ void UUQ_MovementComponent::PM_AirMove()
 	PM_StepSlideMove(qtrue);*/
 }
 
+/*
+===================
+PM_GrappleMove
+
+===================
+*/
 void UUQ_MovementComponent::PM_GrappleMove()
 {
+	FVector vel, v;
+	float vlen;
+
+	UQ_MathLibrary::VectorScale(pml.forward, -16, v);
+	UQ_MathLibrary::VectorAdd(pm->ps->grapplePoint, v, v);
+	UQ_MathLibrary::VectorSubtract(v, pm->ps->origin, vel);
+	vlen = UQ_MathLibrary::VectorLength(vel);
+	UQ_MathLibrary::VectorNormalize(vel);
+
+	if (vlen <= 100)
+		UQ_MathLibrary::VectorScale(vel, 10 * vlen, vel);
+	else
+		UQ_MathLibrary::VectorScale(vel, 800, vel);
+
+	UQ_MathLibrary::VectorCopy(vel, pm->ps->velocity);
+
+	pml.groundPlane = false;
 }
 
 /*
@@ -278,10 +424,6 @@ PM_WalkMove
 */
 void UUQ_MovementComponent::PM_WalkMove()
 {
-	// UQ: Need to fix the declared variables in .h; these are just placeholders to compile the rest of the code
-	Fpmove pm = Fpmove();
-	Fpml pml = Fpml();
-
 	int32		i = 0;
 	FVector		wishvel = FVector::ZeroVector;
 	float		fmove = 0.0f, smove = 0.0f;
@@ -292,7 +434,7 @@ void UUQ_MovementComponent::PM_WalkMove()
 	float		accelerate = 0.0f;
 	float		vel = 0.0f;
 	
-	if (pm.waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
+	if (pm->waterlevel > 2 && FVector::DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
 		// begin swimming
 		PM_WaterMove();
 		return;
@@ -300,7 +442,7 @@ void UUQ_MovementComponent::PM_WalkMove()
 	
 	if (PM_CheckJump()) {
 		// jumped away
-		if (pm.waterlevel > 1) {
+		if (pm->waterlevel > 1) {
 			PM_WaterMove();
 		}
 		else {
@@ -311,10 +453,10 @@ void UUQ_MovementComponent::PM_WalkMove()
 
 	PM_Friction();
 
-	fmove = pm.cmd.forwardmove;
-	smove = pm.cmd.rightmove;
+	fmove = pm->cmd.forwardmove;
+	smove = pm->cmd.rightmove;
 
-	cmd = pm.cmd;
+	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
 
 	// set the movementDir so clients can rotate the legs for strafing
@@ -346,26 +488,26 @@ void UUQ_MovementComponent::PM_WalkMove()
 	wishspeed *= scale;
 
 	// clamp the speed lower if ducking
-	if (pm.ps->pm_flags & PMF_DUCKED) {
-		if (wishspeed > pm.ps->speed * pm_duckScale) {
-			wishspeed = pm.ps->speed * pm_duckScale;
+	if (pm->ps->pm_flags & PMF_DUCKED) {
+		if (wishspeed > pm->ps->speed * pm_duckScale) {
+			wishspeed = pm->ps->speed * pm_duckScale;
 		}
 	}
 
 	// clamp the speed lower if wading or walking on the bottom
-	if (pm.waterlevel) {
+	if (pm->waterlevel) {
 		float	waterScale;
 
-		waterScale = pm.waterlevel / 3.0;
+		waterScale = pm->waterlevel / 3.0;
 		waterScale = 1.0 - (1.0 - pm_swimScale) * waterScale;
-		if (wishspeed > pm.ps->speed * waterScale) {
-			wishspeed = pm.ps->speed * waterScale;
+		if (wishspeed > pm->ps->speed * waterScale) {
+			wishspeed = pm->ps->speed * waterScale;
 		}
 	}
 
 	// when a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit
-	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm.ps->pm_flags & PMF_TIME_KNOCKBACK) {
+	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
 		accelerate = pm_airaccelerate;
 	}
 	else {
@@ -377,27 +519,27 @@ void UUQ_MovementComponent::PM_WalkMove()
 	//Com_Printf("velocity = %1.1f %1.1f %1.1f\n", pm->ps->velocity[0], pm->ps->velocity[1], pm->ps->velocity[2]);
 	//Com_Printf("velocity1 = %1.1f\n", VectorLength(pm->ps->velocity));
 
-	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm.ps->pm_flags & PMF_TIME_KNOCKBACK) {
-		pm.ps->velocity[2] -= pm.ps->gravity * pml.frametime;
+	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
+		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
 	}
 	else {
 		// don't reset the z velocity for slopes
 		// pm->ps->velocity[2] = 0;
 	}
 
-	vel = UQ_MathLibrary::VectorLength(pm.ps->velocity);
+	vel = UQ_MathLibrary::VectorLength(pm->ps->velocity);
 
 	// slide along the ground plane
-	PM_ClipVelocity(pm.ps->velocity, pml.groundTrace.plane.normal,
-		pm.ps->velocity, OVERCLIP);
+	PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,
+		pm->ps->velocity, OVERCLIP);
 
 	// don't decrease velocity when going up or down a slope
-	UQ_MathLibrary::VectorNormalize(pm.ps->velocity);
-	UQ_MathLibrary::VectorScale(pm.ps->velocity, vel, pm.ps->velocity);
+	UQ_MathLibrary::VectorNormalize(pm->ps->velocity);
+	UQ_MathLibrary::VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
 
 
 	// don't do anything if standing still
-	if (!pm.ps->velocity[0] && !pm.ps->velocity[1]) {
+	if (!pm->ps->velocity[0] && !pm->ps->velocity[1]) {
 		return;
 	}
 

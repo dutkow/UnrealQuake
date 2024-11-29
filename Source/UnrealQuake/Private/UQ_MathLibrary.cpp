@@ -31,3 +31,13 @@ void UQ_MathLibrary::VectorScale(const FVector& v, float scale, FVector& out)
 {
 	out = v * scale;
 }
+
+void UQ_MathLibrary::VectorSubtract(const FVector& veca, const FVector& vecb, FVector& out)
+{
+	out = veca - vecb;
+}
+
+void UQ_MathLibrary::VectorAdd(const FVector& veca, const FVector& vecb, FVector& out)
+{
+	out = veca + vecb;
+}
