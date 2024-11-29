@@ -14,4 +14,5 @@ class UNREALQUAKE_API AUQ_GameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+	// to add
 };
