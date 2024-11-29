@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "UQ_Public.h"
-#include "UQ_Local.h"
+#include "QuakeGame/UQ_Public.h"
+#include "QuakeGame/UQ_Local.h"
 
 #include "UQ_MovementComponent.generated.h"
 
@@ -13,9 +13,6 @@
 	Source file: bg_pmove.c
 	Description: Implementation of movement functions as a UActorComponent 
 */
-
-// UQ: These are not static in q3. May need to revert but had compiler errors in PM_Accelerate
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UNREALQUAKE_API UUQ_MovementComponent : public UActorComponent
@@ -157,6 +154,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_CrashLand();
 
+	// UQ: TODO Add an FTraceResult and remove comments on this function
 	//UFUNCTION(BlueprintCallable)
 	//static bool PM_CorrectAllSolid(FTraceResult& Trace);
 
@@ -196,12 +194,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void PM_DropTimers();
 
-	//UFUNCTION(BlueprintCallable)
-	//void PM_UpdateViewAngles(playerState_t* ps, const usercmd_t* cmd);
+	void PM_UpdateViewAngles(FUQ_playerState* ps, const FUQ_usercmd cmd);
 
-	//UFUNCTION(BlueprintCallable)
-	//void PmoveSingle(pmove_t* pmove);
+	UFUNCTION(BlueprintCallable)
+	void PmoveSingle(Fpmove pmove);
 
-	//UFUNCTION(BlueprintCallable)
-	//void Pmove(pmove_t* pmove);
+	UFUNCTION(BlueprintCallable)
+	void Pmove(Fpmove pmove);
 };

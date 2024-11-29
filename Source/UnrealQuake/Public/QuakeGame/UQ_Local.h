@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UQ_Shared.h"
-#include "UQ_Public.h"
+#include "QuakeGame/UQ_Shared.h"
+#include "QuakeGame/UQ_Public.h"
 
 #include "UQ_Local.generated.h"
 

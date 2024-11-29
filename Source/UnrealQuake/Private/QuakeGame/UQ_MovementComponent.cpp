@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UQ_MovementComponent.h"
-#include "UQ_Shared.h"
-#include "UQ_Local.h"
-#include "UQ_Public.h"
-#include "UQ_SurfaceFlags.h"
+#include "QuakeGame/UQ_MovementComponent.h"
+#include "QuakeGame/UQ_Shared.h"
+#include "QuakeGame/UQ_Local.h"
+#include "QuakeGame/UQ_Public.h"
+#include "QuakeGame/UQ_SurfaceFlags.h"
 
 
 
@@ -362,5 +362,17 @@ void UUQ_MovementComponent::PM_Animate()
 }
 
 void UUQ_MovementComponent::PM_DropTimers()
+{
+}
+
+void UUQ_MovementComponent::PM_UpdateViewAngles(FUQ_playerState* ps, const FUQ_usercmd cmd)
+{
+}
+
+void UUQ_MovementComponent::PmoveSingle(Fpmove pmove)
+{
+}
+
+void UUQ_MovementComponent::Pmove(Fpmove pmove)
 {
 }
