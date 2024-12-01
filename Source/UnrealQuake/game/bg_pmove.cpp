@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // UnrealQuake: Added Unreal headers
 #pragma once
-#include "CoreMinimal.h"
 #include "bg_pmove.h"
+#include "CoreMinimal.h"
 
 #include "q_shared.h"
 //#include "bg_public.h" //UnrealQuake: commenting this out as it was moved to the header file
